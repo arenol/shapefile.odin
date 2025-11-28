@@ -7,7 +7,6 @@ Map projections is supported, but limmited to EPSG-codes.
 
 See also the [Shapefile C Library](http://shapelib.maptools.org)
 
-[[TOC]]
 
 ## Importing the library
 
