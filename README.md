@@ -7,10 +7,14 @@ Map projections is supported, but limmited to EPSG-codes.
 
 See also the [Shapefile C Library](http://shapelib.maptools.org)
 
+### Changes
+* v1.1 (Nov, 2025): Added support for .prj files.
 
 ## Importing the library
 
     import "shp"
+
+Or the path to the library directory.
 
 ## Types
  
