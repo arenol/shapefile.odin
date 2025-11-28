@@ -22,6 +22,9 @@ ShpHandle :: struct {
     shpHeader : ShpFileHeader,
     dbfHeader : Dbf3Header,
     numFeatures : int,
+
+    hasCrs : bool,
+    prjData : PrjData
 }
 
 
@@ -31,7 +34,8 @@ BuildFileName :: proc ( filePath : string, fileExt : string) -> string
     fileDir := fname.dir( filePath)
     baseName := fname.short_stem( filePath)
 
-    fnb := strings.builder_make()   // file name builder
+    fnb : strings.Builder   // file name builder
+    defer strings.builder_destroy( &fnb);
     
     strings.write_string( &fnb, fileDir)
     if filePath != "" {
@@ -40,7 +44,8 @@ BuildFileName :: proc ( filePath : string, fileExt : string) -> string
     strings.write_string( &fnb, baseName)
     strings.write_string( &fnb, fileExt)
 
-    return strings.to_string(fnb)
+    result := strings.clone_from_bytes( fnb.buf[:])
+    return result
 }
 
 @(private)
@@ -48,12 +53,14 @@ ShpOpenFiles :: proc( handle :^ShpHandle, fileName: string) -> os.Error
 {
     using handle
 
-
     // create file names for input files
     shpFileName := BuildFileName( fileName, ".shp")
     shxFileName := BuildFileName( fileName, ".shx")
     dbfFileName := BuildFileName( fileName, ".dbf")
 
+    defer delete( shpFileName)
+    defer delete( shxFileName)
+    defer delete( dbfFileName)
 
     mode := os.O_RDONLY
     if fileMode == ShpFileMode.write {
@@ -65,6 +72,7 @@ ShpOpenFiles :: proc( handle :^ShpHandle, fileName: string) -> os.Error
     shpHandle, errp = os.open( shpFileName, mode)
     shxHandle, errx = os.open( shxFileName, mode)
     dbfHandle, errd = os.open( dbfFileName, mode)
+
 
     // if any of them failed, clean up and return nil
     if (errp != nil) || (errx != nil) || (errd != nil) {
@@ -110,10 +118,15 @@ open_files :: proc( fileName : string) -> (^ShpHandle, os.Error)
     numFeatures = (int(handle.shpHeader.fileLen) * 2 - size_of(handle.shpHeader)) / 
                     size_of(ShxIndex )
 
+    // read in the prj.file
+    prjFileName := BuildFileName( fileName, ".prj")
+    err = PrjReadFile( prjFileName, &prjData)
+    hasCrs = (err == nil)
+
     return handle, nil
 }
 
-create_files :: proc( fileName : string, shpType :ShpType) -> (^ShpHandle, os.Error)
+create_files :: proc( fileName : string, shpType :ShpType, epsgCode: string = "") -> (^ShpHandle, os.Error)
 {
     handle := new( ShpHandle)
     using handle
@@ -136,6 +149,17 @@ create_files :: proc( fileName : string, shpType :ShpType) -> (^ShpHandle, os.Er
 
     numFeatures = 0
     
+
+    prjFileName := BuildFileName( fileName, ".prj")
+    defer delete( prjFileName)
+    if (epsgCode != "") {
+        hasCrs = PrjGet( epsgCode, &prjData )
+        PrjWriteFile( prjFileName, &prjData)
+    } 
+    else {
+        hasCrs = false
+    }
+
     err := ShpOpenFiles( handle, fileName)
 
     return handle, err
@@ -229,8 +253,13 @@ close_and_dispose :: proc (handle : ^^ShpHandle)
     os.close(ptr.shxHandle)
     os.close(ptr.dbfHandle)
 
+    if (ptr.hasCrs) {
+        PrjDispose( &ptr.prjData)
+    }
+
     delete( ptr.fieldDefs)
     free( ptr)
+    
     handle^ = nil
 }
 
@@ -331,4 +360,15 @@ write_obj :: proc( handle :^ShpHandle, obj: ^ShpObject)  -> os.Error
 
     handle.numFeatures += 1
     return DbfWriteRecord( handle, obj.attrs[:])
+}
+
+get_epsg_code :: proc( handle :^ShpHandle) -> (string, bool)
+{
+    using handle
+    if !hasCrs {
+        return "", false
+    }
+
+    return PrjFindEpsgCode( &prjData)
+
 }

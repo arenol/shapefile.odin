@@ -3,9 +3,11 @@
 ### version (v1.0, Sept 2025)
 This Odin library is written to support export and import from ESRI Shape files. Only two-dimensional features are supported in this version.
 
-Map projections is not supported in this version, either.
+Map projections is supported, but limmited to EPSG-codes.
 
 See also the [Shapefile C Library](http://shapelib.maptools.org)
+
+[[TOC]]
 
 ## Importing the library
 
@@ -124,7 +126,7 @@ Asserts that obj is NOT of type ShpType.point
 ### Create new Files
 Open for write, will allways create a new file.
 
-    create_files :: proc( filePath : string, shpType :ShpType) -> (^ShpHandle, os.Error)
+    create_files :: proc( filePath : string, shpType :ShpType, epsgCode: string = "") -> (^ShpHandle, os.Error)
 
 Adding database fields:
 
@@ -182,6 +184,8 @@ To free memory of object and set *obj* to **nil**
 
 ### Reading From a File
 
+    import "<path to shp>"
+    
     read_shape_file proc :: (filePath :string)
     {
         handle, err := shp.open_files( filePath)
@@ -200,16 +204,19 @@ To free memory of object and set *obj* to **nil**
 
 ### Writing to a new File
 
+    import "<path to shp>"
+    import "core:time"
+
     write_to_file proc :: (filePath :string)
     {
-        handle, err := shp_create_files( filePath, shp.ShpType.point)
-        defer shp.close_and_dispose( &handle)
+        handle, err := shp.create_files( filePath, shp.ShpType.point, "EPSG:4326")
+        defer close_and_dispose( &handle)
         assert( err == nil)
 
-        shp.AddAttribute( handle, "id", shp.dbfNumberAttribute, 5)
-        shp.AddAttribute( handle, "name", shp.dbfStringAttribute, 12)
-        shp.AddAttribute( handle, "area", shp.dbfNumberAttribute, 15, 2)
-        shp.AddAttribute( handle, "date", shp.dbfDateAttribute)
+        shp.add_field( handle, "id", shp.dbfNumberAttribute, 5)
+        shp.add_field( handle, "name", shp.dbfStringAttribute, 12)
+        shp.add_field( handle, "area", shp.dbfNumberAttribute, 15, 2)
+        shp.add_field( handle, "date", shp.dbfDateAttribute)
 
         obj := shp.create_obj( shp.ShpType.point)
         defer shp.dispose_obj( &obj)
@@ -224,8 +231,8 @@ To free memory of object and set *obj* to **nil**
         // shp.add_part(...) for other types.
         // shp.add_hole(...) to add holes in polygon
 
-        err = shp.write_obj( handle obj)
-        assert( err = nil)
+        err = shp.write_obj( handle, obj)
+        assert( err == nil)
     }
 
 

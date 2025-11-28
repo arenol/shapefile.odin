@@ -167,6 +167,8 @@ DbfAddNullString :: proc( sb :^strings.Builder, width : u8)
 DbfCreateRecord :: proc( fieldDefs : []Dbf3FieldDescriptor, values : []DbfValue)->string
 {
     sb : strings.Builder
+    defer strings.builder_destroy( &sb)
+
     strings.builder_init_none( &sb)
     strings.write_rune( &sb, ' ')   // '*' for deleted records
 
