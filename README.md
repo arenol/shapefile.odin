@@ -1,6 +1,6 @@
 # Odin ShapeLib 
 
-### version (v1.0, Sept 2025)
+### version (v1.1, Nov 2025)
 This Odin library is written to support export and import from ESRI Shape files. Only two-dimensional features are supported in this version.
 
 Map projections is supported, but limmited to EPSG-codes.
