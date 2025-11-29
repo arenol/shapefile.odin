@@ -177,6 +177,7 @@ set_point_xy :: proc( obj: ^ShpObject, x, y: f64)
     numPoints = 1
 }
 
+
 @(private)
 ShpUpdateBox :: proc( obj: ^ShpObject, p :ShpPoint)
 {
@@ -322,7 +323,17 @@ ShpDisposeObjMembers :: proc( obj : ^ShpObject)
 	using obj
 	if parts != nil || len(parts) > 0 { delete( parts) }
 	if coords != nil || len(coords) > 0 { delete( coords) } 
-	if attrs != nil || len(attrs)  > 0 { delete( attrs) }
+	if attrs != nil || len(attrs)  > 0 { 
+
+        // the string attributees are dynamically allocated, so delete them.
+        for attr in attrs {
+            #partial switch v in attr {
+                case string:
+                    delete( v)
+            }
+        }
+        delete( attrs) 
+    }
 
 }
 

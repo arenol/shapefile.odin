@@ -291,6 +291,7 @@ read_next_obj :: proc( handle :^ShpHandle) -> (^ShpObject, os.Error)
 
     // read the attributes
     obj.attrs, _ = DbfReadNextRecord( handle)
+    
     if (err != nil) { return nil, err }
 
     return obj, nil

@@ -38,19 +38,12 @@ DbfValue :: union  {
 dbfStringAttribute :: u8('C')
 dbfNumberAttribute :: u8('N')
 dbfDateAttribute :: u8('D')
+dbfFloatAttribute :: u8('F')
 
 @(private)
 TrimValue :: proc(b: []u8) -> string {
     end, start : int
-    for end=len(b); end > 0; end-=1 {
-        c := b[end-1]
-        if c != ' ' && c != 0 { break }
-    }
-    for start = 0; start < end; start+=1 {
-        c := b[start]
-        if (c != ' ') { break }
-    }
-    return string(b[start:end])
+    return strings.clone(strings.trim(string(b), " "))
 }
 
 @(private)
@@ -72,9 +65,9 @@ DbfDecipherData :: proc( fieldDefs : []Dbf3FieldDescriptor, data : []u8 ) -> [dy
             case dbfStringAttribute:
                 value = strval
             case dbfDateAttribute:
-                if strval == "00000000" { value = true }
+                if strval == "00000000" { value = true } // make it NULL
                 else { value = strval}
-            case dbfNumberAttribute:
+            case dbfNumberAttribute,dbfFloatAttribute:
                 if strval[0] == '*' {
                     value = true
                 } else if fd.decimals == 0 {
@@ -141,8 +134,8 @@ DbfReadNextRecord :: proc (handle :^ShpHandle) -> ([dynamic]DbfValue, os.Error)
     // read and decipher it
     _, err := os.read_ptr(dbfHandle, rawptr(&data[0]), dataSize)
     if (err != nil) { return nil, err }
-
     values := DbfDecipherData( fieldDefs[:], data[:])
+
     return values, nil
 }
 

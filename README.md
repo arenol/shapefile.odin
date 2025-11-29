@@ -183,6 +183,12 @@ To free memory of object and set *obj* to **nil**
 
     write_obj :: proc( handle :^ShpHandle, obj: ^ShpObject) -> os.Error
 
+### Get the Coordinate Reference System
+
+    get_epsg_code :: proc( handle :^ShpHandle) -> (string, ok: bool)
+
+If the .prj file contains an *AUTHORITY* element with the EPSG-code, returns the code with ```ok = true``` if exists, but ```ok = false``` if an EPSG-code is not found, despite the fact that there is a .prj-file.
+
 ## Examples
 
 ### Reading From a File
@@ -201,7 +207,7 @@ To free memory of object and set *obj* to **nil**
             do_something( obj)
 			shp.dispose_obj( &obj)
 			  
-            obj, err = shp.read_next_obj( handle, &obj)
+            obj, err = shp.read_next_obj( handle)
         }
     }
 
