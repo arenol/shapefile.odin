@@ -50,7 +50,7 @@ Keeps track of the files and read/write state.
 
 To get the shape type from a shape handle:
 
-    get_shape_type :: proc( handle :ShpHandle) -> ShpType
+    get_shape_type :: proc( handle :^ShpHandle) -> ShpType
 
 
 ### ShpObject 
@@ -82,7 +82,8 @@ Database field types
     dbfStringAttribute  :: u8('C')
     dbfNumberAttribute  :: u8('N')
     dbfDateAttribute    :: u8('D')
-
+    dbfFloatAttribute   :: u8('F')
+    
 ## Procedures
 
 ### Open Existing Files
@@ -93,7 +94,7 @@ Open for reading:
 ### Reading Objects
 
     read_first_obj :: proc( handle :^ShpHandle) -> (^ShpObject, os.Error)
-    read_obj :: proc( handle :^ShpHandle, index : int, obj) -> (^ShpObject, os.Error)
+    read_obj :: proc( handle :^ShpHandle, index : int) -> (^ShpObject, os.Error)
     read_next_obj :: proc( handle :^ShpHandle) -> (^ShpObject, os.Error)
 
 ### Get Object Coordinates
@@ -127,7 +128,7 @@ Asserts that obj is NOT of type ShpType.point
     is_null_value :: proc( obj :^ShpObject, attrIndex : int) -> bool
 
 ### Create new Files
-Open for write, will allways create a new file.
+Open for write, will always create new files, overwriting existing ones.
 
     create_files :: proc( filePath : string, shpType :ShpType, epsgCode: string = "") -> (^ShpHandle, os.Error)
 
