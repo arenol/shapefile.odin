@@ -6,7 +6,7 @@ import "core:strings"
 import "core:strconv"
 
 @(private)
-EpsgFindCrs :: proc( epsgCode: string) -> (string, bool)
+FindCrsByEpsg :: proc( epsgCode: string) -> (string, bool)
 {
     strParts := strings.split(epsgCode, ":")
     defer delete( strParts)
@@ -23,6 +23,20 @@ EpsgFindCrs :: proc( epsgCode: string) -> (string, bool)
     }
     return wktStr, true
 }
+
+@(private)
+FindCrsByName :: proc( crsName: string) -> (wktout: string, epsg: string, found: bool)
+{
+    for key, wkt in gEpsgData {
+        if strings.contains( wkt, crsName) {
+            epsgCode := fmt.aprintf( "EPSG:%s", key)
+            return wkt, epsgCode, true
+        }
+    }
+    return "", "", false
+
+}
+
 
 
 /*

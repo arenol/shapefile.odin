@@ -196,21 +196,28 @@ PrjFindNode :: proc( node: ^WktNode, name: string) -> ^WktNode
 @(private)
 PrjFindEpsgCode :: proc (prj :^PrjData) -> (string, bool)
 {
+    // first, try to find the EPSG-code in the current WKT-data
     node := PrjFindNode( &prj.root, "AUTHORITY")
-    if node == nil {
-        return "", false
+    if node != nil {
+        sb : strings.Builder
+        result := fmt.sbprintf( &sb, "%s:%s", node.children[0].name, node.children[1].name)
+        return strings.to_string( sb), true
     }
-    sb : strings.Builder
-    result := fmt.sbprintf( &sb, "%s:%s", node.children[0].name, node.children[1].name)
-    return strings.to_string( sb), true
+    // try use the name og the current wkt-data
+    fstChild := prj.root.children[0]
+    crsName := fstChild.name
+    _, epsg, found := FindCrsByName( crsName)
+    if found {
+        return epsg, true
+    }
+    return "", false
 }
 
 @(private)
 PrjGet :: proc(epsgCode : string, prj :^PrjData) -> bool
 {
-    wktString, ok := EpsgFindCrs( epsgCode)
+    wktString, ok := FindCrsByEpsg( epsgCode)
     if (!ok) {
-        fmt.println( "Did not find the EPSG")
         return false
     }
     prj.data = wktString
